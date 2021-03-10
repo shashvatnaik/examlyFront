@@ -5,6 +5,7 @@ const app = express();
 app.use(express.static("public"));
 
 app.get('/', (req, res) => {
+    console.log("gg");
     res.sendFile(__dirname + "./index.html");
 });
 
