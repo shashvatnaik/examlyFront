@@ -28,9 +28,7 @@ const data = {
             ]
         }
     ],
-    "HighScores": [
-        {"name": "shashvat", "score": 30}
-    ]
+    "HighScores": JSON.parse(localStorage.getItem("scores") || "[]")
 }
 
 const state = localStorage.getItem("quizData") || {
@@ -43,8 +41,15 @@ function refreshPage(){
     if(state.page>0 && state.page<=data.Questions.length){
         document.getElementById("container").innerHTML = "";
         document.getElementById("container").appendChild(getQuestion());
-    } else {
-
+    } else if(state.page > data.Questions.length) {
+        document.getElementById("container").innerHTML = "";
+        document.getElementById("container").appendChild(finalScore());
+    } else if(state.page == -1){
+        document.getElementById("container").innerHTML = "";
+        document.getElementById("container").appendChild(getHighScores());
+    } else if(state.page == -2) {
+        location.reload();
+        state.page = 0;
     }
 }
 
@@ -92,9 +97,8 @@ function getProgress(){
 }
 
 function optionClicked(event, option){
-    console.log(event.target);
     if(data["Questions"][state.page-1]["options"][option].correct){
-        state.score += 1;
+        state.score += 10;
         event.target.className.replace("btn-outline-primary", "");
         event.target.classList.add("btn-outline-success");
     } else {
@@ -104,5 +108,95 @@ function optionClicked(event, option){
     setTimeout(() => {
         state.page += 1;
         refreshPage();
-    }, 2000);
+    }, 1000);
+}
+
+function finalScore(){
+    let result = document.createElement("div");
+    result.className = "card";
+    let scoreTitle = document.createElement("h4");
+    scoreTitle.innerText = "Final Score : "+state.score
+    result.appendChild(scoreTitle);
+    let userNameLabel = document.createElement("label");
+    userNameLabel.setAttribute("for", "username");
+    userNameLabel.innerText = "Enter Username : ";
+    userNameLabel.className = "form-label";
+    result.appendChild(userNameLabel);
+    let userNameText = document.createElement("input");
+    userNameText.setAttribute("type", "text");
+    userNameText.setAttribute("id", "username");
+    userNameText.className = "form-control"
+    result.appendChild(userNameText);
+    let saveBtn = document.createElement("button");
+    saveBtn.className = "btn btn-outline-primary btn-width";
+    saveBtn.innerText = "Save";
+    saveBtn.onclick = () => saveScore(document.getElementById("username").value, state.score);
+    result.appendChild(document.createElement("br"));
+    result.appendChild(saveBtn);
+    let playAgainBtn = document.createElement("button");
+    playAgainBtn.className = "btn btn-outline-primary btn-width";
+    playAgainBtn.innerText = "Play Again";
+    playAgainBtn.onclick = () => {
+        state.page = 1;
+        state.score = 0;
+        refreshPage();
+    }
+    result.appendChild(document.createElement("br"));
+    result.appendChild(playAgainBtn);
+    let goHomeBtn = document.createElement("button");
+    goHomeBtn.className = "btn btn-outline-primary btn-width";
+    goHomeBtn.innerText = "Go Home"
+    goHomeBtn.onclick = () => {
+        state.page = -2;
+        state.score = 0;
+        refreshPage();
+    }
+    result.appendChild(document.createElement("br"));
+    result.appendChild(goHomeBtn);
+    return result;
+}
+
+function saveScore(name, score){
+    console.log(name, score);
+    if(name){
+        data.HighScores.push({name, score});
+        data.HighScores.sort((x, y)=> y.score-x.score);
+        localStorage.setItem("scores", JSON.stringify(data.HighScores));
+        highScorePage();
+    } else {
+        alert("Please enter a username to save your score");
+    }
+}
+
+function highScorePage(){
+    state.page = -1;
+    refreshPage();
+}
+
+function getHighScores(){
+    let result = document.createElement("div");
+    result.className = "card";
+    let titleText = document.createElement("h3");
+    titleText.innerText = "High Scores";
+    titleText.className = "primary";
+    result.appendChild(titleText);
+    result.appendChild(document.createElement("br"));
+    data.HighScores.forEach((x, i) => {
+        if(i<4){
+            let temp = document.createElement("h5");
+            temp.innerText = i+1 + ". " + x.name + " : " + x.score;
+            result.appendChild(temp);
+        }
+    });
+    let goHomeBtn = document.createElement("button");
+    goHomeBtn.className = "btn btn-outline-primary btn-width";
+    goHomeBtn.innerText = "Go Home"
+    goHomeBtn.onclick = () => {
+        state.page = -2;
+        state.score = 0;
+        refreshPage();
+    }
+    result.appendChild(document.createElement("br"));
+    result.appendChild(goHomeBtn);
+    return result;
 }
